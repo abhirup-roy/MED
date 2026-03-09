@@ -1034,7 +1034,17 @@ class MED:
 
         # Schedule processes using given scheduler
         if not hasattr(self, "scheduler_cmd"):
-            self.scheduler_cmd = self.scheduler.generate()
+            sig = inspect.signature(self.scheduler.generate)
+            scriptpath_needed = sig.parameters["scriptpath"].default is inspect.Parameter.empty
+            if scriptpath_needed:
+                result = self.scheduler.generate(scriptpath=self.scheduler.script)
+            else:
+                result = self.scheduler.generate()
+
+            if result is None:
+                self.scheduler_cmd = ["sbatch", self.scheduler.script]
+            else:
+                self.scheduler_cmd = result
 
         # These are this epoch's paths to save the simulation outputs to; they
         # will be given to `self.paths.script` as command-line arguments
